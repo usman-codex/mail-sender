@@ -14,7 +14,6 @@ const auth = getAuth(app);
 
 export const SCOPES = [
   'https://www.googleapis.com/auth/gmail.send',
-  'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile',
 ];
@@ -22,12 +21,12 @@ export const SCOPES = [
 const provider = new GoogleAuthProvider();
 SCOPES.forEach((scope) => provider.addScope(scope));
 provider.setCustomParameters({
-  prompt: 'consent select_account',
-  access_type: 'offline',
+  prompt: 'select_account',
 });
 
 let isSigningIn = false;
-let cachedAccessToken: string | null = null;
+let cachedAccessToken: string | null =
+  typeof window !== 'undefined' ? sessionStorage.getItem('gmail_oauth_token') : null;
 
 // Initialize auth state listener
 export const initAuth = (
@@ -36,15 +35,19 @@ export const initAuth = (
 ) => {
   return onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
-      if (cachedAccessToken) {
-        if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
+      const storedToken = cachedAccessToken || sessionStorage.getItem('gmail_oauth_token');
+      if (storedToken) {
+        cachedAccessToken = storedToken;
+        if (onAuthSuccess) onAuthSuccess(user, storedToken);
       } else if (!isSigningIn) {
-        // If we don't have the cached access token, prompt sign-in when user acts
         cachedAccessToken = null;
         if (onAuthFailure) onAuthFailure();
       }
     } else {
       cachedAccessToken = null;
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('gmail_oauth_token');
+      }
       if (onAuthFailure) onAuthFailure();
     }
   });
@@ -61,6 +64,9 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     }
 
     cachedAccessToken = credential.accessToken;
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('gmail_oauth_token', credential.accessToken);
+    }
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: unknown) {
     console.error('Google Sign In Error:', error);
@@ -71,11 +77,18 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
 };
 
 export const getAccessToken = (): string | null => {
-  return cachedAccessToken;
+  return cachedAccessToken || (typeof window !== 'undefined' ? sessionStorage.getItem('gmail_oauth_token') : null);
 };
 
 export const setCachedAccessToken = (token: string | null) => {
   cachedAccessToken = token;
+  if (typeof window !== 'undefined') {
+    if (token) {
+      sessionStorage.setItem('gmail_oauth_token', token);
+    } else {
+      sessionStorage.removeItem('gmail_oauth_token');
+    }
+  }
 };
 
 export const getCurrentUser = (): User | null => {
@@ -85,4 +98,7 @@ export const getCurrentUser = (): User | null => {
 export const logout = async () => {
   await signOut(auth);
   cachedAccessToken = null;
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('gmail_oauth_token');
+  }
 };
