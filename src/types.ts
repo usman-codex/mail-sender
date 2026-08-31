@@ -66,6 +66,18 @@ export interface GmailQuotaInfo {
   tier: 'Free Gmail (500/day)' | 'Google Workspace (2000/day)';
 }
 
+export interface SentEmailRecord {
+  id?: string;
+  sender_email: string;
+  recipient_email: string;
+  recipient_name?: string;
+  subject: string;
+  status: 'sent' | 'failed';
+  error_message?: string;
+  created_at: string;
+  attachment_names?: string[];
+}
+
 export interface UserSavedData {
   user_email: string;
   display_name?: string;
@@ -77,6 +89,7 @@ export interface UserSavedData {
   created_at?: string;
   total_sent_count?: number;
   last_login?: string;
+  is_online?: boolean;
 }
 
 export interface ActivityEvent {

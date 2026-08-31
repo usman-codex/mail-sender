@@ -197,11 +197,12 @@ export const supabaseService = {
     recipientEmail: string,
     subject: string,
     status: 'sent' | 'failed',
+    attachmentNames: string[] = [],
     errorMsg?: string
   ) {
     if (!senderEmail) return;
     const cleanSender = senderEmail.toLowerCase().trim();
-    analyticsService.trackEmailSent(cleanSender, 1);
+    analyticsService.trackEmailSent(cleanSender, recipientEmail, subject, status, attachmentNames, errorMsg);
 
     try {
       await supabase.from('email_logs').insert({
@@ -213,6 +214,47 @@ export const supabaseService = {
         created_at: new Date().toISOString(),
       });
     } catch (err) {}
+  },
+
+  async getAllEmailLogs(filterSenderEmail?: string): Promise<import('../types').SentEmailRecord[]> {
+    const localLogs = analyticsService.getLocalEmailLogs(filterSenderEmail);
+    const logMap: Record<string, import('../types').SentEmailRecord> = {};
+
+    localLogs.forEach((l) => {
+      const key = `${l.sender_email}_${l.recipient_email}_${l.created_at}`;
+      logMap[key] = l;
+    });
+
+    try {
+      let query = supabase.from('email_logs').select('*').order('created_at', { ascending: false }).limit(200);
+      if (filterSenderEmail) {
+        query = query.eq('sender_email', filterSenderEmail.toLowerCase().trim());
+      }
+      const { data, error } = await query;
+
+      if (!error && data) {
+        data.forEach((d: any) => {
+          const key = `${d.sender_email}_${d.recipient_email}_${d.created_at}`;
+          logMap[key] = {
+            id: d.id ? `remote_${d.id}` : logMap[key]?.id,
+            sender_email: d.sender_email,
+            recipient_email: d.recipient_email,
+            recipient_name: d.recipient_name || logMap[key]?.recipient_name,
+            subject: d.subject || logMap[key]?.subject || '',
+            status: d.status || 'sent',
+            error_message: d.error_message || logMap[key]?.error_message,
+            created_at: d.created_at,
+            attachment_names: d.attachment_names || logMap[key]?.attachment_names || [],
+          };
+        });
+      }
+    } catch (e) {
+      console.warn('Supabase email logs fetch error:', e);
+    }
+
+    return Object.values(logMap).sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   },
 };
 

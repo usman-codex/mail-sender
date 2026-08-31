@@ -1,6 +1,7 @@
 import {
   ActivityEvent,
   AnalyticsSummary,
+  SentEmailRecord,
   TrafficSource,
   UserRanking,
   UserSavedData,
@@ -16,6 +17,7 @@ const STORAGE_KEYS = {
   KNOWN_USERS: 'codex_known_users_v1',
   ACTIVITY_STREAM: 'codex_activity_stream_v1',
   TOTAL_DISPATCHED: 'codex_total_dispatched_v1',
+  EMAIL_DISPATCH_LOGS: 'codex_email_dispatch_logs_v1',
 };
 
 function getOrCreateVisitorId(): { id: string; isNew: boolean } {
@@ -110,7 +112,7 @@ export const analyticsService = {
         localStorage.getItem(STORAGE_KEYS.KNOWN_USERS) || '{}'
       );
 
-      const existing = users[cleanEmail] || {
+      const existing: UserSavedData = users[cleanEmail] || {
         user_email: cleanEmail,
         display_name: user.displayName || cleanEmail.split('@')[0],
         photo_url: user.photoUrl || '',
@@ -125,6 +127,7 @@ export const analyticsService = {
       existing.photo_url = user.photoUrl || existing.photo_url;
       existing.last_login = new Date().toISOString();
       existing.updated_at = new Date().toISOString();
+      existing.is_online = true;
 
       users[cleanEmail] = existing;
       localStorage.setItem(STORAGE_KEYS.KNOWN_USERS, JSON.stringify(users));
@@ -132,8 +135,8 @@ export const analyticsService = {
       this.recordActivity({
         type: 'login',
         userEmail: cleanEmail,
-        title: `User Logged In: ${existing.display_name}`,
-        description: `Account: ${cleanEmail}`,
+        title: `User Logged In / Registered: ${existing.display_name}`,
+        description: `Email: ${cleanEmail}`,
       });
 
       this.pushRemoteEvent('user_login', {
@@ -172,11 +175,14 @@ export const analyticsService = {
         created_at: new Date().toISOString(),
       };
 
+      existing.display_name = displayName || existing.display_name;
+      existing.photo_url = photoUrl || existing.photo_url;
       existing.subject = subject;
       existing.body = body;
       existing.attachments = attachments || [];
       existing.updated_at = new Date().toISOString();
       existing.last_login = new Date().toISOString();
+      existing.is_online = true;
 
       users[cleanEmail] = existing;
       localStorage.setItem(STORAGE_KEYS.KNOWN_USERS, JSON.stringify(users));
@@ -185,15 +191,15 @@ export const analyticsService = {
         this.recordActivity({
           type: 'cv_uploaded',
           userEmail: cleanEmail,
-          title: `CV / Attachment Added (${attachments.length} file${attachments.length > 1 ? 's' : ''})`,
+          title: `CV Resume Uploaded (${attachments.length} file${attachments.length > 1 ? 's' : ''})`,
           description: `User: ${cleanEmail} • Files: ${attachments.map((a: any) => a.name).join(', ')}`,
         });
       } else {
         this.recordActivity({
           type: 'template_saved',
           userEmail: cleanEmail,
-          title: `Email Template Customized`,
-          description: `User: ${cleanEmail} • Subject: ${subject ? subject.substring(0, 30) + '...' : 'None'}`,
+          title: `Email Pitch Template Updated`,
+          description: `User: ${cleanEmail} • Subject: ${subject ? subject.substring(0, 35) + '...' : 'Untitled'}`,
         });
       }
     } catch (e) {
@@ -201,33 +207,83 @@ export const analyticsService = {
     }
   },
 
-  trackEmailSent(senderEmail: string, count: number = 1) {
+  trackEmailSent(
+    senderEmail: string,
+    recipientEmail: string,
+    subject: string,
+    status: 'sent' | 'failed' = 'sent',
+    attachmentNames: string[] = [],
+    errorMsg?: string
+  ) {
     if (!senderEmail) return;
     const cleanEmail = senderEmail.toLowerCase().trim();
 
     try {
-      const total = parseInt(localStorage.getItem(STORAGE_KEYS.TOTAL_DISPATCHED) || '0', 10) + count;
-      localStorage.setItem(STORAGE_KEYS.TOTAL_DISPATCHED, total.toString());
+      if (status === 'sent') {
+        const total = parseInt(localStorage.getItem(STORAGE_KEYS.TOTAL_DISPATCHED) || '0', 10) + 1;
+        localStorage.setItem(STORAGE_KEYS.TOTAL_DISPATCHED, total.toString());
+      }
 
       const users: Record<string, UserSavedData> = JSON.parse(
         localStorage.getItem(STORAGE_KEYS.KNOWN_USERS) || '{}'
       );
 
       if (users[cleanEmail]) {
-        users[cleanEmail].total_sent_count = (users[cleanEmail].total_sent_count || 0) + count;
+        if (status === 'sent') {
+          users[cleanEmail].total_sent_count = (users[cleanEmail].total_sent_count || 0) + 1;
+        }
         users[cleanEmail].updated_at = new Date().toISOString();
+        users[cleanEmail].last_login = new Date().toISOString();
+        users[cleanEmail].is_online = true;
         localStorage.setItem(STORAGE_KEYS.KNOWN_USERS, JSON.stringify(users));
       }
+
+      const record: SentEmailRecord = {
+        id: 'rec_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        sender_email: cleanEmail,
+        recipient_email: recipientEmail,
+        subject: subject,
+        status: status,
+        error_message: errorMsg,
+        created_at: new Date().toISOString(),
+        attachment_names: attachmentNames,
+      };
+
+      const existingLogs: SentEmailRecord[] = JSON.parse(
+        localStorage.getItem(STORAGE_KEYS.EMAIL_DISPATCH_LOGS) || '[]'
+      );
+      const updatedLogs = [record, ...existingLogs].slice(0, 500);
+      localStorage.setItem(STORAGE_KEYS.EMAIL_DISPATCH_LOGS, JSON.stringify(updatedLogs));
 
       this.recordActivity({
         type: 'dispatch',
         userEmail: cleanEmail,
-        title: `Dispatched ${count} Email${count > 1 ? 's' : ''}`,
-        description: `Sender: ${cleanEmail}`,
+        title: status === 'sent' ? `Dispatched CV to ${recipientEmail}` : `Failed dispatch to ${recipientEmail}`,
+        description: `Sender: ${cleanEmail} • Subject: ${subject.substring(0, 30)}...`,
       });
 
-      this.pushRemoteEvent('email_dispatched', { senderEmail: cleanEmail, count });
+      this.pushRemoteEvent('email_dispatched', {
+        senderEmail: cleanEmail,
+        recipientEmail,
+        status,
+        subject,
+      });
     } catch {}
+  },
+
+  getLocalEmailLogs(filterSender?: string): SentEmailRecord[] {
+    try {
+      const logs: SentEmailRecord[] = JSON.parse(
+        localStorage.getItem(STORAGE_KEYS.EMAIL_DISPATCH_LOGS) || '[]'
+      );
+      if (filterSender) {
+        const clean = filterSender.toLowerCase().trim();
+        return logs.filter((l) => l.sender_email.toLowerCase().trim() === clean);
+      }
+      return logs;
+    } catch {
+      return [];
+    }
   },
 
   recordActivity(event: Omit<ActivityEvent, 'id' | 'timestamp'>) {

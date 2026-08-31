@@ -308,7 +308,13 @@ export default function App() {
         storageService.addHistoryLog(log);
         setHistoryLogs((prev) => [log, ...prev]);
 
-        supabaseService.logEmailSent(user.email, recipient.email, customizedSubject, 'sent');
+        supabaseService.logEmailSent(
+          user.email,
+          recipient.email,
+          customizedSubject,
+          'sent',
+          attachments.map((a) => a.name)
+        );
 
         const updatedQuota = storageService.incrementQuota(1);
         setQuota(updatedQuota);
@@ -339,7 +345,14 @@ export default function App() {
         storageService.addHistoryLog(log);
         setHistoryLogs((prev) => [log, ...prev]);
 
-        supabaseService.logEmailSent(user.email, recipient.email, customizedSubject, 'failed', errorMessage);
+        supabaseService.logEmailSent(
+          user.email,
+          recipient.email,
+          customizedSubject,
+          'failed',
+          attachments.map((a) => a.name),
+          errorMessage
+        );
 
         if (rateConfig.stopOnConsecutiveErrors && consecutiveErrors >= 2) {
           console.warn('Paused due to consecutive dispatch errors');
