@@ -32,7 +32,7 @@ export function Header({
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                Resume Mailer
+                Codex Resume Mailer
               </h1>
             </div>
           </div>

@@ -9,6 +9,7 @@ interface AuthCardProps {
 
 export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
   const [copied, setCopied] = useState(false);
+  const [showLegal, setShowLegal] = useState<'privacy' | 'terms' | null>(null);
   const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
 
   const handleCopyHostname = () => {
@@ -35,7 +36,7 @@ export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-3">
-            Codex Mail Dispatcher
+            Codex Resume Mailer
           </h2>
           <p className="text-slate-400 text-sm sm:text-base max-w-lg mx-auto leading-relaxed mb-8">
             Send targeted applications, proposals, and personalized messages with pre-attached CVs directly with anti-ban rate limiting.
@@ -163,8 +164,89 @@ export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
               </div>
             </div>
           </div>
+
+          {/* Legal and compliance links for Google Verification */}
+          <div className="mt-8 pt-4 border-t border-slate-800/60 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400">
+            <span>© {new Date().getFullYear()} Codex Resume Mailer</span>
+            <span>•</span>
+            <button
+              onClick={() => setShowLegal('privacy')}
+              className="text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+            >
+              Privacy Policy
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => setShowLegal('terms')}
+              className="text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+            >
+              Terms of Service
+            </button>
+            <span>•</span>
+            <a
+              href="mailto:usmancodex.dev@gmail.com"
+              className="text-slate-400 hover:text-slate-200"
+            >
+              Support: usmancodex.dev@gmail.com
+            </a>
+          </div>
         </div>
       </div>
+
+      {/* Privacy Policy & Terms Modal */}
+      {showLegal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 text-left max-h-[80vh] overflow-y-auto space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-white">
+                {showLegal === 'privacy' ? 'Codex Resume Mailer - Privacy Policy' : 'Codex Resume Mailer - Terms of Service'}
+              </h3>
+              <button
+                onClick={() => setShowLegal(null)}
+                className="text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800 text-sm font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+            
+            {showLegal === 'privacy' ? (
+              <div className="text-xs text-slate-300 space-y-3 leading-relaxed">
+                <p><strong>Last updated:</strong> August 2026</p>
+                <p>
+                  <strong>Codex Resume Mailer</strong> respects your privacy and is designed to provide secure, direct email sending services using Google Gmail API.
+                </p>
+                <h4 className="font-semibold text-white text-sm pt-2">Data We Access</h4>
+                <p>
+                  We access your Gmail send scope solely to dispatch emails and resume attachments that you explicitly compose and confirm. We do not read your inbox, store your passwords, or sell your information.
+                </p>
+                <h4 className="font-semibold text-white text-sm pt-2">Local Storage</h4>
+                <p>
+                  Resume files and draft templates are stored locally in your browser's private storage.
+                </p>
+                <h4 className="font-semibold text-white text-sm pt-2">Contact</h4>
+                <p>
+                  For questions or data deletion requests, contact developer support at <a href="mailto:usmancodex.dev@gmail.com" className="text-indigo-400 underline">usmancodex.dev@gmail.com</a>.
+                </p>
+              </div>
+            ) : (
+              <div className="text-xs text-slate-300 space-y-3 leading-relaxed">
+                <p><strong>Last updated:</strong> August 2026</p>
+                <p>
+                  By accessing or using <strong>Codex Resume Mailer</strong>, you agree to comply with applicable laws and Google API Services User Data Policies.
+                </p>
+                <h4 className="font-semibold text-white text-sm pt-2">Acceptable Use</h4>
+                <p>
+                  You agree to use this application only for legitimate job applications, business inquiries, and communications in accordance with anti-spam laws.
+                </p>
+                <h4 className="font-semibold text-white text-sm pt-2">Contact</h4>
+                <p>
+                  Support: <a href="mailto:usmancodex.dev@gmail.com" className="text-indigo-400 underline">usmancodex.dev@gmail.com</a>.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
