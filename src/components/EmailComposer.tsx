@@ -9,9 +9,10 @@ import {
   RotateCcw,
   Check,
   Cloud,
+  Sparkles,
 } from 'lucide-react';
 import { EmailAttachment, EmailRecipient, RateLimitConfig, UserProfile } from '../types';
-import { parseRecipientInput, isValidEmail, extractEmailsWithRemaining } from '../utils';
+import { parseRecipientInput, isValidEmail, extractEmailsWithRemaining, validateEmailDetailed } from '../utils';
 import { AttachmentUploader } from './AttachmentUploader';
 import { storageService } from '../services/storage';
 import { supabaseService } from '../services/supabase';
@@ -41,6 +42,7 @@ export function EmailComposer({
   const [body, setBody] = useState(savedData.body || '');
   const [attachments, setAttachments] = useState<EmailAttachment[]>(savedData.attachments || []);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [suggestionCorrection, setSuggestionCorrection] = useState<string | null>(null);
   const [isAutoSaved, setIsAutoSaved] = useState(false);
   const [cloudSynced, setCloudSynced] = useState(false);
 
@@ -111,12 +113,14 @@ export function EmailComposer({
   const handleSubjectChange = (val: string) => {
     setSubject(val);
     setValidationError(null);
+    setSuggestionCorrection(null);
     persistChanges(val, body, attachments);
   };
 
   const handleBodyChange = (val: string) => {
     setBody(val);
     setValidationError(null);
+    setSuggestionCorrection(null);
     persistChanges(subject, val, attachments);
   };
 
@@ -125,16 +129,56 @@ export function EmailComposer({
     persistChanges(subject, body, newAttachments);
   };
 
-  const addRecipientsFromInput = (text: string) => {
-    if (!text.trim()) return;
+  const applySuggestion = (suggestedEmail: string) => {
+    const validation = validateEmailDetailed(suggestedEmail);
+    if (validation.isValid) {
+      const existingEmails = new Set(recipients.map((r) => r.email.toLowerCase()));
+      if (!existingEmails.has(validation.cleanEmail)) {
+        setRecipients((prev) => [
+          ...prev,
+          {
+            id: `rcp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+            email: validation.cleanEmail,
+            name: '',
+            company: '',
+            role: '',
+            isValid: true,
+            status: 'pending',
+          },
+        ]);
+      }
+      setRecipientInput('');
+      setValidationError(null);
+      setSuggestionCorrection(null);
+    }
+  };
 
-    const parsed = parseRecipientInput(text);
+  const addRecipientsFromInput = (text: string) => {
+    const raw = text.trim();
+    if (!raw) return;
+
+    // First validate if it's a single email candidate
+    const tokens = raw.split(/[\r\n,;\t\s]+/).filter(Boolean);
+    if (tokens.length === 1) {
+      const validation = validateEmailDetailed(tokens[0]);
+      if (!validation.isValid) {
+        setValidationError(validation.error || 'Invalid email address format.');
+        setSuggestionCorrection(validation.suggestion || null);
+        return;
+      }
+    }
+
+    const parsed = parseRecipientInput(raw);
     if (parsed.length === 0) {
-      setValidationError('No valid email address found in the entered text.');
+      const firstToken = tokens[0] || raw;
+      const validation = validateEmailDetailed(firstToken);
+      setValidationError(validation.error || 'Invalid email address. Please enter a valid recipient email.');
+      setSuggestionCorrection(validation.suggestion || null);
       return;
     }
 
     setValidationError(null);
+    setSuggestionCorrection(null);
 
     const existingEmails = new Set(recipients.map((r) => r.email.toLowerCase()));
     const newItems = parsed.filter((p) => !existingEmails.has(p.email.toLowerCase()));
@@ -149,6 +193,7 @@ export function EmailComposer({
   const handleInputChange = (value: string) => {
     setRecipientInput(value);
     setValidationError(null);
+    setSuggestionCorrection(null);
 
     if (autoAddTimeoutRef.current) {
       clearTimeout(autoAddTimeoutRef.current);
@@ -171,13 +216,14 @@ export function EmailComposer({
     }
 
     const trimmed = value.trim();
-    if (isValidEmail(trimmed)) {
+    const validation = validateEmailDetailed(trimmed);
+    if (validation.isValid) {
       autoAddTimeoutRef.current = setTimeout(() => {
         const existingEmails = new Set(recipients.map((r) => r.email.toLowerCase()));
-        if (!existingEmails.has(trimmed.toLowerCase())) {
+        if (!existingEmails.has(validation.cleanEmail)) {
           const newRecipient: EmailRecipient = {
             id: `rcp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-            email: trimmed.toLowerCase(),
+            email: validation.cleanEmail,
             name: '',
             company: '',
             role: '',
@@ -186,8 +232,10 @@ export function EmailComposer({
           };
           setRecipients((prev) => [...prev, newRecipient]);
           setRecipientInput('');
+          setValidationError(null);
+          setSuggestionCorrection(null);
         }
-      }, 400);
+      }, 500);
     }
   };
 
@@ -229,11 +277,19 @@ export function EmailComposer({
     setRecipients([]);
     setRecipientInput('');
     setValidationError(null);
+    setSuggestionCorrection(null);
   };
 
   const handleTriggerSend = () => {
     let finalRecipients = [...recipients];
     if (recipientInput.trim()) {
+      const validation = validateEmailDetailed(recipientInput.trim());
+      if (!validation.isValid) {
+        setValidationError(validation.error || 'Recipient email is invalid. Please fix before sending.');
+        setSuggestionCorrection(validation.suggestion || null);
+        inputRef.current?.focus();
+        return;
+      }
       const extra = parseRecipientInput(recipientInput);
       const existing = new Set(finalRecipients.map((r) => r.email.toLowerCase()));
       const filtered = extra.filter((e) => !existing.has(e.email.toLowerCase()));
@@ -241,9 +297,19 @@ export function EmailComposer({
     }
 
     if (finalRecipients.length === 0) {
-      setValidationError('Please enter at least one recipient email.');
+      setValidationError('Please enter at least one valid recipient email.');
       inputRef.current?.focus();
       return;
+    }
+
+    // Double-check all recipients for strict validity
+    for (const r of finalRecipients) {
+      const check = validateEmailDetailed(r.email);
+      if (!check.isValid) {
+        setValidationError(`Invalid email in list: "${r.email}" - ${check.error}`);
+        setSuggestionCorrection(check.suggestion || null);
+        return;
+      }
     }
 
     if (!subject.trim()) {
@@ -257,6 +323,7 @@ export function EmailComposer({
     }
 
     setValidationError(null);
+    setSuggestionCorrection(null);
 
     persistChanges(subject, body, attachments);
 
@@ -269,9 +336,21 @@ export function EmailComposer({
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
       {validationError && (
-        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{validationError}</span>
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+            <span className="font-medium">{validationError}</span>
+          </div>
+          {suggestionCorrection && (
+            <button
+              type="button"
+              onClick={() => applySuggestion(suggestionCorrection)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-[11px] font-semibold border border-rose-500/40 transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+            >
+              <Sparkles className="w-3 h-3 text-rose-300" />
+              <span>Use {suggestionCorrection} instead</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -305,12 +384,13 @@ export function EmailComposer({
                   onKeyDown={handleKeyDown}
                   onBlur={handleBlur}
                   onPaste={handlePaste}
-                  placeholder="Enter recipient email..."
+                  placeholder="Enter recipient email (e.g. hr@company.com)..."
                   className="w-full p-3.5 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none text-xs text-slate-200 placeholder-slate-500 font-mono resize-none leading-relaxed"
                 />
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-between items-center text-[11px] text-slate-500">
+                <span>Press Enter or , to add</span>
                 <button
                   type="button"
                   disabled={!recipientInput.trim()}
@@ -337,7 +417,7 @@ export function EmailComposer({
                     <button
                       type="button"
                       onClick={() => removeRecipient(rcp.id)}
-                      className="p-1 text-slate-500 hover:text-rose-400 rounded transition-colors"
+                      className="p-1 text-slate-500 hover:text-rose-400 rounded transition-colors cursor-pointer"
                       title="Remove"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -349,6 +429,7 @@ export function EmailComposer({
               <div className="p-6 text-center rounded-xl bg-slate-950 border border-slate-800/80 text-slate-400 text-xs flex-1 flex flex-col items-center justify-center">
                 <Users className="w-5 h-5 text-slate-600 mb-1.5" />
                 <p className="text-slate-400">No recipients added yet</p>
+                <p className="text-[11px] text-slate-500 mt-1">Only verified & valid emails will be accepted</p>
               </div>
             )}
           </div>

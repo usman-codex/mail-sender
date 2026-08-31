@@ -1,16 +1,181 @@
 import { DeliveryLog, EmailRecipient } from './types';
 
-export const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 export const GLOBAL_EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-export const STRICT_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+// Common typo domains map -> correct domain
+const TYPO_DOMAINS_MAP: Record<string, string> = {
+  // Gmail typos
+  'gmail.co': 'gmail.com',
+  'gmail.con': 'gmail.com',
+  'gmail.cm': 'gmail.com',
+  'gmail.c': 'gmail.com',
+  'gmail.col': 'gmail.com',
+  'gmail.om': 'gmail.com',
+  'gmail.ocm': 'gmail.com',
+  'gmail.comm': 'gmail.com',
+  'gmail.comp': 'gmail.com',
+  'gmail.org': 'gmail.com',
+  'gmail.net': 'gmail.com',
+  'gmail.cc': 'gmail.com',
+  'gmal.com': 'gmail.com',
+  'gmaill.com': 'gmail.com',
+  'gamil.com': 'gmail.com',
+  'gmai.com': 'gmail.com',
+  'gmali.com': 'gmail.com',
+  'gmaik.com': 'gmail.com',
+  'gmaio.com': 'gmail.com',
+  'gmil.com': 'gmail.com',
+  'gmai.co': 'gmail.com',
+  'gmaill.co': 'gmail.com',
+  'gmaii.com': 'gmail.com',
+  'gmaiil.com': 'gmail.com',
+  'googlemail.co': 'googlemail.com',
+  'googlemal.com': 'googlemail.com',
+
+  // Yahoo typos
+  'yahoo.co': 'yahoo.com',
+  'yahoo.con': 'yahoo.com',
+  'yahoo.cm': 'yahoo.com',
+  'yahoo.c': 'yahoo.com',
+  'yahoo.comm': 'yahoo.com',
+  'yahoo.org': 'yahoo.com',
+  'yahoo.net': 'yahoo.com',
+  'yaho.com': 'yahoo.com',
+  'yahool.com': 'yahoo.com',
+  'ymail.co': 'ymail.com',
+  'yaho.co': 'yahoo.com',
+
+  // Hotmail & Outlook typos
+  'hotmail.co': 'hotmail.com',
+  'hotmail.con': 'hotmail.com',
+  'hotmail.cm': 'hotmail.com',
+  'hotmail.c': 'hotmail.com',
+  'hotmial.com': 'hotmail.com',
+  'hotmai.com': 'hotmail.com',
+  'hotmaill.com': 'hotmail.com',
+  'hotmial.co': 'hotmail.com',
+  'outlook.co': 'outlook.com',
+  'outlook.con': 'outlook.com',
+  'outlook.cm': 'outlook.com',
+  'outlook.c': 'outlook.com',
+  'outlok.com': 'outlook.com',
+  'outloo.com': 'outlook.com',
+  'outluk.com': 'outlook.com',
+
+  // iCloud typos
+  'icloud.co': 'icloud.com',
+  'icloud.con': 'icloud.com',
+  'icloud.cm': 'icloud.com',
+  'iclould.com': 'icloud.com',
+  'iclou.com': 'icloud.com',
+
+  // Proton typos
+  'protonmail.co': 'protonmail.com',
+  'protonmal.com': 'protonmail.com',
+  'proton.co': 'proton.me',
+};
+
+export interface EmailValidationResult {
+  isValid: boolean;
+  cleanEmail: string;
+  error?: string;
+  suggestion?: string;
+}
+
+export function validateEmailDetailed(rawEmail: string): EmailValidationResult {
+  if (!rawEmail || !rawEmail.trim()) {
+    return { isValid: false, cleanEmail: '', error: 'Email address cannot be empty.' };
+  }
+
+  const clean = rawEmail
+    .trim()
+    .toLowerCase()
+    .replace(/^[<("'\s]+/, '')
+    .replace(/[>)"',\s;:]+$/, '')
+    .replace(/\.+$/, '');
+
+  if (clean.length > 254) {
+    return { isValid: false, cleanEmail: clean, error: 'Email address is too long (exceeds 254 characters).' };
+  }
+
+  const atIndex = clean.indexOf('@');
+  if (atIndex === -1) {
+    return { isValid: false, cleanEmail: clean, error: 'Missing "@" symbol in email address.' };
+  }
+
+  if (clean.indexOf('@', atIndex + 1) !== -1) {
+    return { isValid: false, cleanEmail: clean, error: 'Email contains multiple "@" symbols.' };
+  }
+
+  const localPart = clean.slice(0, atIndex);
+  const domainPart = clean.slice(atIndex + 1);
+
+  if (!localPart || localPart.length === 0) {
+    return { isValid: false, cleanEmail: clean, error: 'Missing username before "@".' };
+  }
+
+  if (!domainPart || domainPart.length === 0) {
+    return { isValid: false, cleanEmail: clean, error: 'Missing domain after "@".' };
+  }
+
+  if (localPart.startsWith('.') || localPart.endsWith('.')) {
+    return { isValid: false, cleanEmail: clean, error: 'Username cannot start or end with a period.' };
+  }
+
+  if (localPart.includes('..') || domainPart.includes('..')) {
+    return { isValid: false, cleanEmail: clean, error: 'Email cannot contain consecutive periods ("..").' };
+  }
+
+  // Check valid characters in local part
+  const localPartRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/;
+  if (!localPartRegex.test(localPart)) {
+    return { isValid: false, cleanEmail: clean, error: 'Username contains invalid characters.' };
+  }
+
+  // Check domain structure
+  if (!domainPart.includes('.')) {
+    return { isValid: false, cleanEmail: clean, error: `Invalid domain "${domainPart}". Missing top-level domain (e.g. .com).` };
+  }
+
+  const domainSegments = domainPart.split('.');
+  const tld = domainSegments[domainSegments.length - 1];
+
+  if (!tld || tld.length < 2 || !/^[a-zA-Z]+$/.test(tld)) {
+    return { isValid: false, cleanEmail: clean, error: `Invalid top-level domain ".${tld}". Top-level domain must be valid letters.` };
+  }
+
+  // Check domain segments for invalid start/end hyphens
+  for (const seg of domainSegments) {
+    if (!seg || seg.startsWith('-') || seg.endsWith('-') || !/^[a-zA-Z0-9-]+$/.test(seg)) {
+      return { isValid: false, cleanEmail: clean, error: `Invalid domain format in "${domainPart}".` };
+    }
+  }
+
+  // Check against known typo domains
+  if (TYPO_DOMAINS_MAP[domainPart]) {
+    const correctDomain = TYPO_DOMAINS_MAP[domainPart];
+    const suggestedEmail = `${localPart}@${correctDomain}`;
+    return {
+      isValid: false,
+      cleanEmail: clean,
+      error: `"${domainPart}" is an invalid or misspelled domain. Did you mean "${correctDomain}"?`,
+      suggestion: suggestedEmail,
+    };
+  }
+
+  return {
+    isValid: true,
+    cleanEmail: clean,
+  };
+}
 
 export function isValidEmail(email: string): boolean {
-  return STRICT_EMAIL_REGEX.test(email.trim());
+  return validateEmailDetailed(email).isValid;
 }
 
 export function extractEmailsWithRemaining(
   rawInput: string
-): { extracted: EmailRecipient[]; remainingText: string } {
+): { extracted: EmailRecipient[]; remainingText: string; invalidDetected?: string[] } {
   if (!rawInput) return { extracted: [], remainingText: '' };
 
   const endsWithDelimiter = /[\r\n,;\t\s]$/.test(rawInput);
@@ -34,28 +199,47 @@ export function parseRecipientInput(rawInput: string): EmailRecipient[] {
   const recipients: EmailRecipient[] = [];
   const seenEmails = new Set<string>();
 
-  const matches = rawInput.match(GLOBAL_EMAIL_REGEX);
-  if (!matches) return [];
+  // Tokenize by common delimiters
+  const tokens = rawInput
+    .split(/[\r\n,;\t\s]+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
 
-  for (const rawMatch of matches) {
-    const cleanEmail = rawMatch
-      .trim()
-      .toLowerCase()
-      .replace(/^[<("'\s]+/, '')
-      .replace(/[>)"',\s;:]+$/, '')
-      .replace(/\.+$/, '');
-
-    if (cleanEmail && isValidEmail(cleanEmail) && !seenEmails.has(cleanEmail)) {
-      seenEmails.add(cleanEmail);
+  for (const token of tokens) {
+    const validation = validateEmailDetailed(token);
+    if (validation.isValid && !seenEmails.has(validation.cleanEmail)) {
+      seenEmails.add(validation.cleanEmail);
       recipients.push({
         id: `rcp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        email: cleanEmail,
+        email: validation.cleanEmail,
         name: '',
         company: '',
         role: '',
         isValid: true,
         status: 'pending',
       });
+    }
+  }
+
+  // Fallback check with regex for free-flowing text
+  if (recipients.length === 0) {
+    const matches = rawInput.match(GLOBAL_EMAIL_REGEX);
+    if (matches) {
+      for (const rawMatch of matches) {
+        const validation = validateEmailDetailed(rawMatch);
+        if (validation.isValid && !seenEmails.has(validation.cleanEmail)) {
+          seenEmails.add(validation.cleanEmail);
+          recipients.push({
+            id: `rcp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+            email: validation.cleanEmail,
+            name: '',
+            company: '',
+            role: '',
+            isValid: true,
+            status: 'pending',
+          });
+        }
+      }
     }
   }
 

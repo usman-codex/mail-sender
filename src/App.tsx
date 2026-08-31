@@ -16,7 +16,7 @@ import {
   UserProfile,
   GmailQuotaInfo,
 } from './types';
-import { renderTemplateText, waitWithAbort } from './utils';
+import { renderTemplateText, waitWithAbort, validateEmailDetailed } from './utils';
 import { Header } from './components/Header';
 import { AuthCard } from './components/AuthCard';
 import { EmailComposer } from './components/EmailComposer';
@@ -229,10 +229,6 @@ export default function App() {
       setCurrentQueueIndex(i);
       const recipient = recipients[i];
 
-      setQueueRecipients((prev) =>
-        prev.map((r, idx) => (idx === i ? { ...r, status: 'sending' } : r))
-      );
-
       const customizedSubject = renderTemplateText(subject, {
         name: recipient.name,
         company: recipient.company,
@@ -248,6 +244,54 @@ export default function App() {
         sender_name: user?.displayName,
         sender_email: user?.email,
       });
+
+      // Strict Pre-dispatch Validation
+      const emailValidation = validateEmailDetailed(recipient.email);
+      if (!emailValidation.isValid) {
+        const timestamp = new Date().toISOString();
+        const invalidError = emailValidation.error || 'Invalid recipient email address or domain';
+
+        consecutiveErrors++;
+        setQueueRecipients((prev) =>
+          prev.map((r, idx) =>
+            idx === i
+              ? {
+                  ...r,
+                  status: 'failed',
+                  error: invalidError,
+                }
+              : r
+          )
+        );
+
+        const log: DeliveryLog = {
+          id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+          subject: customizedSubject,
+          status: 'failed',
+          sentAt: timestamp,
+          error: invalidError,
+          attachmentNames: attachments.map((a) => a.name),
+        };
+        storageService.addHistoryLog(log);
+        setHistoryLogs((prev) => [log, ...prev]);
+
+        supabaseService.logEmailSent(
+          user.email,
+          recipient.email,
+          customizedSubject,
+          'failed',
+          attachments.map((a) => a.name),
+          invalidError
+        );
+
+        continue;
+      }
+
+      setQueueRecipients((prev) =>
+        prev.map((r, idx) => (idx === i ? { ...r, status: 'sending' } : r))
+      );
 
       let sendSuccess = false;
       let messageId = '';
