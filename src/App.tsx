@@ -144,22 +144,6 @@ export default function App() {
     }
   };
 
-  const handleDemoLogin = () => {
-    setIsAuthLoading(true);
-    setAuthError(null);
-    setTimeout(() => {
-      const demoProfile: UserProfile = {
-        email: 'demo.applicant@gmail.com',
-        displayName: 'Demo User (Sandbox)',
-        photoURL: undefined,
-        providerId: 'demo-sandbox',
-      };
-      setUser(demoProfile);
-      setToken('demo-sandbox-token');
-      setIsAuthLoading(false);
-    }, 400);
-  };
-
   const handleLogout = async () => {
     try {
       await logout();
@@ -457,7 +441,6 @@ export default function App() {
             onSignIn={handleSignIn}
             isLoading={isAuthLoading}
             error={authError}
-            onDemoLogin={handleDemoLogin}
           />
         ) : (
           <div className="space-y-6">

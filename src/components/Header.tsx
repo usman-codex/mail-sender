@@ -32,14 +32,14 @@ export function Header({
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                Gmail Resume Mailer
+                Resume Mailer
               </h1>
             </div>
           </div>
 
           {/* User Account & Quota Pill */}
           <div className="flex items-center flex-wrap gap-3">
-            {user ? (
+            {user && (
               <>
                 {/* Quota indicator */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs text-slate-300">
@@ -70,17 +70,12 @@ export function Header({
                     id="logout-btn"
                     onClick={onLogout}
                     title="Sign Out"
-                    className="text-slate-400 hover:text-rose-400 p-1 transition-colors ml-1"
+                    className="text-slate-400 hover:text-rose-400 p-1 transition-colors ml-1 cursor-pointer"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </>
-            ) : (
-              <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl font-medium">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                Authentication Required
-              </div>
             )}
           </div>
         </div>

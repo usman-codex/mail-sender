@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { Mail, Zap, FileText, Lock, AlertCircle, Copy, Check, ExternalLink, Sparkles } from 'lucide-react';
+import { Mail, Zap, FileText, Lock, AlertCircle, Copy, Check, ExternalLink } from 'lucide-react';
 
 interface AuthCardProps {
   onSignIn: () => void;
   isLoading: boolean;
   error?: string | null;
-  onDemoLogin?: () => void;
 }
 
-export function AuthCard({ onSignIn, isLoading, error, onDemoLogin }: AuthCardProps) {
+export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
   const [copied, setCopied] = useState(false);
   const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
 
@@ -43,12 +42,12 @@ export function AuthCard({ onSignIn, isLoading, error, onDemoLogin }: AuthCardPr
           </p>
 
           {/* Official styled Google Sign In Button */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+          <div className="flex justify-center mb-6">
             <button
               id="google-signin-btn"
               onClick={onSignIn}
               disabled={isLoading}
-              className="group relative inline-flex items-center justify-center gap-3 px-7 py-3.5 rounded-xl bg-white text-slate-900 font-semibold text-sm hover:bg-slate-100 active:scale-[0.98] transition-all shadow-lg shadow-white/10 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer w-full sm:w-auto"
+              className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-xl bg-white text-slate-900 font-semibold text-sm hover:bg-slate-100 active:scale-[0.98] transition-all shadow-lg shadow-white/10 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin"></div>
@@ -74,17 +73,6 @@ export function AuthCard({ onSignIn, isLoading, error, onDemoLogin }: AuthCardPr
               )}
               <span>{isLoading ? 'Connecting to Gmail...' : 'Sign in with Google'}</span>
             </button>
-
-            {onDemoLogin && (
-              <button
-                id="demo-preview-btn"
-                onClick={onDemoLogin}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm transition border border-slate-700 cursor-pointer w-full sm:w-auto"
-              >
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Try Sandbox Demo</span>
-              </button>
-            )}
           </div>
 
           {/* Error / Unauthorized Domain Banner */}
