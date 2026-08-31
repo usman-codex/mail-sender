@@ -28,7 +28,6 @@ let isSigningIn = false;
 let cachedAccessToken: string | null =
   typeof window !== 'undefined' ? sessionStorage.getItem('gmail_oauth_token') : null;
 
-// Initialize auth state listener
 export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
@@ -53,7 +52,6 @@ export const initAuth = (
   });
 };
 
-// Sign in with Google Popup
 export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
   try {
     isSigningIn = true;

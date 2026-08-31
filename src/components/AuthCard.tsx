@@ -25,12 +25,10 @@ export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
   return (
     <div className="max-w-2xl mx-auto my-12 px-4">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 sm:p-10 shadow-2xl relative overflow-hidden">
-        {/* Background glow */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20"></div>
 
         <div className="relative z-10 text-center">
-          {/* Logo / Badge */}
           <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-600/30 text-white">
             <Mail className="w-8 h-8" />
           </div>
@@ -42,7 +40,6 @@ export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
             Send targeted applications, proposals, and personalized messages with pre-attached CVs directly with anti-ban rate limiting.
           </p>
 
-          {/* Official styled Google Sign In Button */}
           <div className="flex justify-center mb-6">
             <button
               id="google-signin-btn"
@@ -76,7 +73,6 @@ export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
             </button>
           </div>
 
-          {/* Error / Unauthorized Domain Banner */}
           {error && (
             <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs text-left space-y-3">
               <div className="flex items-start gap-2">
@@ -126,7 +122,6 @@ export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
             </div>
           )}
 
-          {/* Feature Pillars */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6 border-t border-slate-800 text-left">
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-3">
               <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
@@ -165,7 +160,6 @@ export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
             </div>
           </div>
 
-          {/* Legal and compliance links for Google Verification */}
           <div className="mt-8 pt-4 border-t border-slate-800/60 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400">
             <span>© {new Date().getFullYear()} Codex Resume Mailer</span>
             <span>•</span>
@@ -193,7 +187,6 @@ export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
         </div>
       </div>
 
-      {/* Privacy Policy & Terms Modal */}
       {showLegal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 text-left max-h-[80vh] overflow-y-auto space-y-4 shadow-2xl">

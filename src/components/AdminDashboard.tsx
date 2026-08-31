@@ -94,7 +94,6 @@ export function AdminDashboard({ currentUserEmail }: AdminDashboardProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* Top Header Card */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
@@ -132,9 +131,7 @@ export function AdminDashboard({ currentUserEmail }: AdminDashboardProps) {
         </div>
       </div>
 
-      {/* Main Content Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Users List Column */}
         <div className="lg:col-span-5 space-y-3">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -144,7 +141,6 @@ export function AdminDashboard({ currentUserEmail }: AdminDashboardProps) {
               </span>
             </div>
 
-            {/* Search Box */}
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
@@ -156,7 +152,6 @@ export function AdminDashboard({ currentUserEmail }: AdminDashboardProps) {
               />
             </div>
 
-            {/* Users list items */}
             {loading ? (
               <div className="py-12 text-center text-xs text-slate-500 space-y-2">
                 <RefreshCw className="w-5 h-5 animate-spin mx-auto text-indigo-400" />
@@ -227,11 +222,9 @@ export function AdminDashboard({ currentUserEmail }: AdminDashboardProps) {
           </div>
         </div>
 
-        {/* User Detail Column (Template & CV Preview) */}
         <div className="lg:col-span-7 space-y-4">
           {selectedUser ? (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
-              {/* User Profile Header */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-800">
                 <div className="flex items-center gap-3">
                   {selectedUser.photo_url ? (
@@ -264,7 +257,6 @@ export function AdminDashboard({ currentUserEmail }: AdminDashboardProps) {
                 )}
               </div>
 
-              {/* Subject Line */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-indigo-400" />
@@ -275,7 +267,6 @@ export function AdminDashboard({ currentUserEmail }: AdminDashboardProps) {
                 </div>
               </div>
 
-              {/* Message Body */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-indigo-400" />
@@ -286,7 +277,6 @@ export function AdminDashboard({ currentUserEmail }: AdminDashboardProps) {
                 </div>
               </div>
 
-              {/* Uploaded CV Files & Download */}
               <div className="space-y-2 pt-2">
                 <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                   <Paperclip className="w-3.5 h-3.5 text-indigo-400" />

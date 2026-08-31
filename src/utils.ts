@@ -1,26 +1,18 @@
 import { DeliveryLog, EmailRecipient } from './types';
 
-// RFC 5322 email regex matcher
 export const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 export const GLOBAL_EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 export const STRICT_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-/**
- * Checks if a string is a complete valid email address
- */
 export function isValidEmail(email: string): boolean {
   return STRICT_EMAIL_REGEX.test(email.trim());
 }
 
-/**
- * Real-time extraction helper: extracts completed emails and returns remaining unfinished text
- */
 export function extractEmailsWithRemaining(
   rawInput: string
 ): { extracted: EmailRecipient[]; remainingText: string } {
   if (!rawInput) return { extracted: [], remainingText: '' };
 
-  // Check if ending with a delimiter (space, comma, newline, semicolon, tab)
   const endsWithDelimiter = /[\r\n,;\t\s]$/.test(rawInput);
 
   if (endsWithDelimiter) {
@@ -28,7 +20,6 @@ export function extractEmailsWithRemaining(
     return { extracted, remainingText: '' };
   }
 
-  // If typing continuously, take everything up to the last word/token
   const parts = rawInput.split(/[\r\n,;\t\s]+/);
   const candidateText = parts.slice(0, -1).join(' ');
   const remainingText = parts[parts.length - 1] || '';
@@ -37,29 +28,22 @@ export function extractEmailsWithRemaining(
   return { extracted, remainingText };
 }
 
-/**
- * Parses raw input text (which can contain multiple emails separated by newlines, commas, tabs, spaces,
- * or messy text pasted from Google Maps, Excel, websites, etc.)
- * ONLY extracts valid email addresses and completely ignores all other text, phone numbers, URLs, and noise.
- */
 export function parseRecipientInput(rawInput: string): EmailRecipient[] {
   if (!rawInput || !rawInput.trim()) return [];
 
   const recipients: EmailRecipient[] = [];
   const seenEmails = new Set<string>();
 
-  // Extract all emails anywhere in the text using global regex
   const matches = rawInput.match(GLOBAL_EMAIL_REGEX);
   if (!matches) return [];
 
   for (const rawMatch of matches) {
-    // Strip any boundary punctuation like trailing comma, closing parenthesis, period, or leading angle bracket
     const cleanEmail = rawMatch
       .trim()
       .toLowerCase()
       .replace(/^[<("'\s]+/, '')
       .replace(/[>)"',\s;:]+$/, '')
-      .replace(/\.+$/, ''); // strip trailing dots
+      .replace(/\.+$/, '');
 
     if (cleanEmail && isValidEmail(cleanEmail) && !seenEmails.has(cleanEmail)) {
       seenEmails.add(cleanEmail);
@@ -78,9 +62,6 @@ export function parseRecipientInput(rawInput: string): EmailRecipient[] {
   return recipients;
 }
 
-/**
- * Human friendly format for file sizes
- */
 export function formatBytes(bytes: number, decimals: number = 2): string {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -90,9 +71,6 @@ export function formatBytes(bytes: number, decimals: number = 2): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-/**
- * Replace placeholders in template text
- */
 export function renderTemplateText(
   template: string,
   variables: {
@@ -112,7 +90,6 @@ export function renderTemplateText(
     }
   }
 
-  // Replace default fallbacks for unreplaced common tags
   result = result.replace(/{{\s*name\s*}}/gi, variables.name || 'Hiring Team');
   result = result.replace(/{{\s*company\s*}}/gi, variables.company || 'your organization');
   result = result.replace(/{{\s*role\s*}}/gi, variables.role || 'the advertised position');
@@ -122,9 +99,6 @@ export function renderTemplateText(
   return result;
 }
 
-/**
- * Delay with cancel token / abort controller support
- */
 export function waitWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
@@ -144,9 +118,6 @@ export function waitWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-/**
- * Convert Delivery logs to downloadable CSV
- */
 export function exportLogsToCSV(logs: DeliveryLog[]): void {
   if (logs.length === 0) return;
 

@@ -34,7 +34,6 @@ export function ConfirmationModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
       <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 relative">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -42,7 +41,6 @@ export function ConfirmationModal({
           <X className="w-4 h-4" />
         </button>
 
-        {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
             <Mail className="w-5 h-5" />
@@ -53,7 +51,6 @@ export function ConfirmationModal({
           </div>
         </div>
 
-        {/* Details Card */}
         <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
           <div className="flex justify-between items-center py-1 border-b border-slate-800">
             <span className="text-slate-400">Sender Account:</span>
@@ -95,7 +92,6 @@ export function ConfirmationModal({
           </div>
         </div>
 
-        {/* Sample Recipients Box */}
         <div className="space-y-1.5">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
             Recipients Queue Preview:
@@ -113,7 +109,6 @@ export function ConfirmationModal({
           </div>
         </div>
 
-        {/* Notice */}
         <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-300 flex items-start gap-2.5">
           <ShieldCheck className="w-4 h-4 shrink-0 text-indigo-400 mt-0.5" />
           <span>
@@ -121,7 +116,6 @@ export function ConfirmationModal({
           </span>
         </div>
 
-        {/* Buttons */}
         <div className="flex items-center justify-end gap-3 pt-2">
           <button
             type="button"

@@ -52,7 +52,6 @@ export function RateLimitSettings({
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-xl">
-        {/* Interval Throttling Slider */}
         <div className="space-y-3 pb-6 border-b border-slate-800">
           <div className="flex items-center justify-between">
             <div>
@@ -86,7 +85,6 @@ export function RateLimitSettings({
           </div>
         </div>
 
-        {/* Jitter (Humanized Timing) */}
         <div className="flex items-start justify-between gap-4 pb-6 border-b border-slate-800">
           <div>
             <label className="text-sm font-bold text-white flex items-center gap-2">
@@ -108,7 +106,6 @@ export function RateLimitSettings({
           </label>
         </div>
 
-        {/* Error Circuit Breaker */}
         <div className="flex items-start justify-between gap-4 pb-6 border-b border-slate-800">
           <div>
             <label className="text-sm font-bold text-white flex items-center gap-2">
@@ -130,7 +127,6 @@ export function RateLimitSettings({
           </label>
         </div>
 
-        {/* Daily Cap Threshold Warning */}
         <div className="space-y-3 pb-6 border-b border-slate-800">
           <div className="flex items-center justify-between">
             <div>
@@ -153,7 +149,6 @@ export function RateLimitSettings({
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="flex items-center justify-between pt-2">
           <button
             type="button"
@@ -181,7 +176,6 @@ export function RateLimitSettings({
         </div>
       </div>
 
-      {/* Gmail Sending Rules Guide Box */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
           <HelpCircle className="w-4 h-4 text-indigo-400" />

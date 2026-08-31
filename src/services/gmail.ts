@@ -10,9 +10,6 @@ interface SendEmailParams {
   isHtml?: boolean;
 }
 
-/**
- * Encodes a UTF-8 string into RFC 4648 URL-safe Base64 for the Gmail API
- */
 function encodeBase64Url(str: string): string {
   const bytes = new TextEncoder().encode(str);
   let binary = '';
@@ -28,12 +25,8 @@ function encodeBase64Url(str: string): string {
     .replace(/=+$/, '');
 }
 
-/**
- * Encodes header values (like Subject or From Name) using MIME Q/B-encoding (RFC 2047)
- */
 function encodeMimeHeader(text: string): string {
   if (!text) return '';
-  // If ASCII only and no special characters, return as is
   if (/^[\x20-\x7E]+$/.test(text) && !/[;="?]/.test(text)) {
     return text;
   }
@@ -54,9 +47,6 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#039;');
 }
 
-/**
- * Builds a valid RFC 2822 / RFC 2046 MIME message
- */
 function buildMimeMessage({
   to,
   fromName,
@@ -69,7 +59,6 @@ function buildMimeMessage({
   const boundary = `----=_Part_Mix_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const altBoundary = `----=_Part_Alt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-  // Build clean sender header
   let fromHeader = '';
   if (fromEmail) {
     if (fromName) {
@@ -79,7 +68,6 @@ function buildMimeMessage({
     }
   }
 
-  // Format HTML body with clean paragraph tags
   const htmlContent = body
     .split('\n')
     .map((line) => (line.trim() === '' ? '<br/>' : `<p style="margin: 0 0 12px 0; line-height: 1.6; color: #1e293b;">${escapeHtml(line)}</p>`))
@@ -105,7 +93,6 @@ ${htmlContent}
   ].filter(Boolean);
 
   if (attachments.length === 0) {
-    // Single / Alternative message without attachments
     headers.push(`Content-Type: multipart/alternative; boundary="${altBoundary}"`);
 
     const parts = [
@@ -127,12 +114,10 @@ ${htmlContent}
     return parts.join(CRLF);
   }
 
-  // Multipart/mixed message WITH attachments
   headers.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
 
   let message = headers.join(CRLF) + CRLF + CRLF;
 
-  // 1. First part: Text and HTML alternative body
   message += `--${boundary}${CRLF}`;
   message += `Content-Type: multipart/alternative; boundary="${altBoundary}"${CRLF}${CRLF}`;
   
@@ -148,16 +133,13 @@ ${htmlContent}
   
   message += `--${altBoundary}--${CRLF}${CRLF}`;
 
-  // 2. Subsequent parts: Attachments
   for (const file of attachments) {
     let cleanBase64 = file.dataBase64 || '';
     if (cleanBase64.includes(',')) {
       cleanBase64 = cleanBase64.split(',')[1];
     }
-    // Remove any newlines from base64
     cleanBase64 = cleanBase64.replace(/[\r\n\s]/g, '');
 
-    // Break base64 into 76-char RFC compliant chunks
     const chunkedBase64 = cleanBase64.match(/.{1,76}/g)?.join(CRLF) || cleanBase64;
 
     const mimeType = file.type || 'application/octet-stream';
@@ -178,7 +160,6 @@ export async function sendGmailMessage(
   accessToken: string,
   params: SendEmailParams
 ): Promise<{ id: string; threadId: string }> {
-  // Support Sandbox Demo Mode
   if (accessToken === 'demo-sandbox-token') {
     await new Promise((res) => setTimeout(res, 600));
     return {
@@ -209,7 +190,6 @@ export async function sendGmailMessage(
         errorDetail = errJson.error.message;
       }
     } catch {
-      // Keep default
     }
 
     if (response.status === 401) {

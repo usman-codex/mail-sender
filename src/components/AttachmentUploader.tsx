@@ -6,7 +6,7 @@ import { formatBytes } from '../utils';
 interface AttachmentUploaderProps {
   attachments: EmailAttachment[];
   onUpdateAttachments: (attachments: EmailAttachment[]) => void;
-  isCVMode?: boolean; // When true, highlights this is for CV/Resume
+  isCVMode?: boolean;
 }
 
 export function AttachmentUploader({
@@ -19,7 +19,7 @@ export function AttachmentUploader({
   const [isDragging, setIsDragging] = useState(false);
 
   const totalSize = attachments.reduce((acc, curr) => acc + curr.size, 0);
-  const MAX_GMAIL_SIZE = 25 * 1024 * 1024; // 25 MB
+  const MAX_GMAIL_SIZE = 25 * 1024 * 1024;
 
   const handleFiles = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
@@ -95,7 +95,6 @@ export function AttachmentUploader({
         )}
       </div>
 
-      {/* Drag and Drop Zone */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -140,7 +139,6 @@ export function AttachmentUploader({
         </div>
       )}
 
-      {/* Attached Files List */}
       {attachments.length > 0 && (
         <div className="space-y-1.5 pt-1">
           {attachments.map((file) => (

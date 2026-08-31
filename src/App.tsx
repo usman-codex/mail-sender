@@ -6,12 +6,11 @@ import {
   getAccessToken,
   setCachedAccessToken,
 } from './services/auth';
-import { sendGmailMessage, getGmailUserProfile } from './services/gmail';
-import { storageService, DEFAULT_TEMPLATES, DEFAULT_RATE_CONFIG } from './services/storage';
+import { sendGmailMessage } from './services/gmail';
+import { storageService, DEFAULT_RATE_CONFIG } from './services/storage';
 import {
   EmailAttachment,
   EmailRecipient,
-  EmailTemplate,
   RateLimitConfig,
   DeliveryLog,
   UserProfile,
@@ -28,19 +27,16 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { supabaseService, ADMIN_EMAIL } from './services/supabase';
 
 export default function App() {
-  // Auth state
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // App data state
   const [activeTab, setActiveTab] = useState<'composer' | 'history' | 'admin'>('composer');
   const [rateConfig, setRateConfig] = useState<RateLimitConfig>(DEFAULT_RATE_CONFIG);
   const [historyLogs, setHistoryLogs] = useState<DeliveryLog[]>([]);
   const [quota, setQuota] = useState<GmailQuotaInfo>(storageService.getQuota());
 
-  // Sequence runner state
   const [isSendingSequence, setIsSendingSequence] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [queueRecipients, setQueueRecipients] = useState<EmailRecipient[]>([]);
@@ -50,7 +46,6 @@ export default function App() {
   const [activeBody, setActiveBody] = useState('');
   const [activeAttachments, setActiveAttachments] = useState<EmailAttachment[]>([]);
 
-  // Confirmation modal state
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [pendingSequenceParams, setPendingSequenceParams] = useState<{
     recipients: EmailRecipient[];
@@ -59,20 +54,16 @@ export default function App() {
     attachments: EmailAttachment[];
   } | null>(null);
 
-  // Abort controller ref for pausing/stopping
   const abortControllerRef = useRef<AbortController | null>(null);
   const pausePromiseResolveRef = useRef<(() => void) | null>(null);
   const isPausedRef = useRef(false);
   isPausedRef.current = isPaused;
 
-  // Initialize data and auth
   useEffect(() => {
-    // Load local storage items
     setRateConfig(storageService.getRateConfig());
     setHistoryLogs(storageService.getHistory());
     setQuota(storageService.getQuota());
 
-    // Init Auth listener
     const unsubscribe = initAuth(
       (firebaseUser, accessToken) => {
         const profile: UserProfile = {
@@ -85,7 +76,6 @@ export default function App() {
         setToken(accessToken);
         setIsAuthLoading(false);
 
-        // Sync initial login profile to Supabase
         const localData = storageService.getUserData(profile.email);
         supabaseService.syncUserData(
           profile.email,
@@ -125,7 +115,6 @@ export default function App() {
         setUser(profile);
         setToken(result.accessToken);
 
-        // Sync to Supabase immediately upon sign in
         const localData = storageService.getUserData(profile.email);
         supabaseService.syncUserData(
           profile.email,
@@ -155,7 +144,6 @@ export default function App() {
     }
   };
 
-  // Trigger sequence after user fills composer
   const handleInitiateSequence = (
     recipients: EmailRecipient[],
     subject: string,
@@ -171,7 +159,6 @@ export default function App() {
     setIsConfirmModalOpen(true);
   };
 
-  // User confirmed the modal -> execute sending loop
   const executeSequence = async () => {
     if (!pendingSequenceParams || !user) return;
     setIsConfirmModalOpen(false);
@@ -179,7 +166,6 @@ export default function App() {
     const { recipients, subject, body, attachments } = pendingSequenceParams;
     let currentAccessToken = token;
 
-    // Validate access token
     if (!currentAccessToken) {
       currentAccessToken = await getAccessToken();
       if (!currentAccessToken) {
@@ -214,7 +200,6 @@ export default function App() {
         break;
       }
 
-      // Check if paused
       while (isPausedRef.current) {
         if (abortController.signal.aborted) break;
         await new Promise<void>((resolve) => {
@@ -229,12 +214,10 @@ export default function App() {
       setCurrentQueueIndex(i);
       const recipient = recipients[i];
 
-      // Mark as sending
       setQueueRecipients((prev) =>
         prev.map((r, idx) => (idx === i ? { ...r, status: 'sending' } : r))
       );
 
-      // Render customized subject and body
       const customizedSubject = renderTemplateText(subject, {
         name: recipient.name,
         company: recipient.company,
@@ -255,7 +238,6 @@ export default function App() {
       let messageId = '';
       let errorMessage = '';
 
-      // Try sending with transient retry logic
       const maxRetries = rateConfig.maxRetries || 2;
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
@@ -285,7 +267,6 @@ export default function App() {
       const timestamp = new Date().toISOString();
 
       if (sendSuccess) {
-        // Update recipient state
         setQueueRecipients((prev) =>
           prev.map((r, idx) =>
             idx === i
@@ -299,7 +280,6 @@ export default function App() {
           )
         );
 
-        // Record delivery log locally
         const log: DeliveryLog = {
           id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
           recipientEmail: recipient.email,
@@ -313,10 +293,8 @@ export default function App() {
         storageService.addHistoryLog(log);
         setHistoryLogs((prev) => [log, ...prev]);
 
-        // Record to Supabase email logs
         supabaseService.logEmailSent(user.email, recipient.email, customizedSubject, 'sent');
 
-        // Increment daily quota
         const updatedQuota = storageService.incrementQuota(1);
         setQuota(updatedQuota);
       } else {
@@ -346,10 +324,8 @@ export default function App() {
         storageService.addHistoryLog(log);
         setHistoryLogs((prev) => [log, ...prev]);
 
-        // Record failed log to Supabase
         supabaseService.logEmailSent(user.email, recipient.email, customizedSubject, 'failed', errorMessage);
 
-        // Stop on 2 consecutive errors if enabled
         if (rateConfig.stopOnConsecutiveErrors && consecutiveErrors >= 2) {
           console.warn('Paused due to consecutive dispatch errors');
           setIsPaused(true);
@@ -357,11 +333,10 @@ export default function App() {
         }
       }
 
-      // If more emails remain and not cancelled, wait anti-ban delay with countdown
       if (i < recipients.length - 1 && !abortController.signal.aborted) {
         let delay = rateConfig.delaySeconds;
         if (rateConfig.enableJitter) {
-          delay += Math.floor(Math.random() * 3); // 0 to 2s random variation
+          delay += Math.floor(Math.random() * 3);
         }
 
         for (let s = delay; s > 0; s--) {
@@ -384,7 +359,6 @@ export default function App() {
     abortControllerRef.current = null;
   };
 
-  // Pause / Resume / Cancel handlers
   const handlePauseSequence = () => {
     setIsPaused(true);
     isPausedRef.current = true;
@@ -425,7 +399,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Top Header */}
       <Header
         user={user}
         quota={quota}
@@ -434,7 +407,6 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      {/* Main Container */}
       <main className="flex-1 pb-16">
         {!user ? (
           <AuthCard
@@ -444,7 +416,6 @@ export default function App() {
           />
         ) : (
           <div className="space-y-6">
-            {/* Live Queue Progress Monitor (Shows when sending or recently completed) */}
             {(isSendingSequence || queueRecipients.length > 0) && (
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
                 <QueueProgress
@@ -462,7 +433,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Active Tab View */}
             {activeTab === 'composer' && (
               <EmailComposer
                 user={user}
@@ -492,7 +462,6 @@ export default function App() {
               />
             )}
 
-            {/* Admin Dashboard: ONLY accessible if logged in as usmancodex.dev@gmail.com */}
             {activeTab === 'admin' && isAdmin && (
               <AdminDashboard currentUserEmail={user.email} />
             )}
@@ -500,7 +469,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Confirmation Modal */}
       {user && pendingSequenceParams && (
         <ConfirmationModal
           isOpen={isConfirmModalOpen}

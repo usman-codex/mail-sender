@@ -3,7 +3,7 @@ export interface EmailAttachment {
   name: string;
   type: string;
   size: number;
-  dataBase64: string; // Base64 encoded payload
+  dataBase64: string;
   uploadedAt: string;
 }
 
@@ -33,11 +33,11 @@ export interface EmailRecipient {
 }
 
 export interface RateLimitConfig {
-  delaySeconds: number; // Delay between consecutive email sends (e.g., 4s)
-  enableJitter: boolean; // Random +0 to +2 seconds jitter to mimic human timing
-  maxDailyCap: number; // Daily safe limit threshold warning (e.g., 450 emails)
-  stopOnConsecutiveErrors: boolean; // Pause immediately if 2 consecutive emails fail
-  maxRetries: number; // Retries on transient errors (like 429 / 503)
+  delaySeconds: number;
+  enableJitter: boolean;
+  maxDailyCap: number;
+  stopOnConsecutiveErrors: boolean;
+  maxRetries: number;
 }
 
 export interface DeliveryLog {

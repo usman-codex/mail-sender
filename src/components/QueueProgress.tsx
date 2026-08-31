@@ -69,9 +69,7 @@ export function QueueProgress({
           origin: { y: 0.6 },
           colors: ['#f43f5e', '#6366f1', '#10b981', '#f59e0b'],
         });
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
   }, [isComplete, sentCount]);
 
@@ -79,10 +77,8 @@ export function QueueProgress({
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5 relative overflow-hidden">
-      {/* Background glow */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
-      {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
@@ -124,7 +120,6 @@ export function QueueProgress({
           </div>
         </div>
 
-        {/* Action Controls */}
         <div className="flex items-center gap-2">
           {isSending && !isPaused && (
             <button
@@ -161,7 +156,6 @@ export function QueueProgress({
         </div>
       </div>
 
-      {/* Progress Bar & Stats */}
       <div className="space-y-2">
         <div className="flex justify-between items-center text-xs">
           <span className="text-slate-400 font-medium">
@@ -181,7 +175,6 @@ export function QueueProgress({
         </div>
       </div>
 
-      {/* Diagnostics / Troubleshooting Banner on Failures */}
       {failedCount > 0 && (
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs space-y-3">
           <div className="flex items-start gap-2.5">
@@ -224,7 +217,6 @@ export function QueueProgress({
         </div>
       )}
 
-      {/* Countdown Timer Widget between emails */}
       {isSending && !isPaused && countdownSeconds > 0 && (
         <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2.5">
@@ -249,7 +241,6 @@ export function QueueProgress({
         </div>
       )}
 
-      {/* Live Recipient Queue List */}
       <div className="space-y-2">
         <div className="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">
           Queue Sequence Log

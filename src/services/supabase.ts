@@ -9,7 +9,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export const supabaseService = {
-  // Sync user profile & current template data to Supabase
   async syncUserData(
     email: string,
     displayName: string,
@@ -46,7 +45,6 @@ export const supabaseService = {
     }
   },
 
-  // Fetch template data for a specific user from Supabase
   async getUserData(email: string): Promise<UserSavedData | null> {
     if (!email) return null;
     const cleanEmail = email.toLowerCase().trim();
@@ -69,7 +67,6 @@ export const supabaseService = {
     }
   },
 
-  // Fetch all registered users & their templates (Admin only)
   async getAllUsersData(): Promise<UserSavedData[]> {
     try {
       const { data, error } = await supabase
@@ -88,7 +85,6 @@ export const supabaseService = {
     }
   },
 
-  // Record an email send event log
   async logEmailSent(
     senderEmail: string,
     recipientEmail: string,
@@ -107,7 +103,6 @@ export const supabaseService = {
         created_at: new Date().toISOString(),
       });
     } catch (err) {
-      // Non-blocking log
     }
   }
 };

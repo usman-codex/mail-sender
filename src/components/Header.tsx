@@ -25,7 +25,6 @@ export function Header({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           
-          {/* Logo & Branding */}
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow-md shadow-indigo-600/30">
               <Mail className="w-5 h-5" />
@@ -37,11 +36,9 @@ export function Header({
             </div>
           </div>
 
-          {/* User Account & Quota Pill */}
           <div className="flex items-center flex-wrap gap-3">
             {user && (
               <>
-                {/* Quota indicator */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs text-slate-300">
                   <span className="text-[10px] uppercase font-bold text-slate-400">Quota</span>
                   <span className="font-semibold text-white font-mono text-xs">
@@ -49,7 +46,6 @@ export function Header({
                   </span>
                 </div>
 
-                {/* Profile Badge */}
                 <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/70">
                   {user.photoURL ? (
                     <img
@@ -80,7 +76,6 @@ export function Header({
           </div>
         </div>
 
-        {/* Navigation Tabs */}
         {user && (
           <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-slate-800/80">
             <button
@@ -106,7 +101,6 @@ export function Header({
               Delivery Logs ({quota.dailySentCount})
             </button>
 
-            {/* ONLY show Admin Page button if logged in as usmancodex.dev@gmail.com */}
             {isAdmin && (
               <button
                 id="tab-admin"

@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 @layer base {
-  /* Custom thin scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;

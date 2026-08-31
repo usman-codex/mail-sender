@@ -33,7 +33,6 @@ export function TemplateManager({
   const [isEditing, setIsEditing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Form state
   const activeTemplate = templates.find((t) => t.id === selectedId) || templates[0];
   const [title, setTitle] = useState(activeTemplate?.title || '');
   const [category, setCategory] = useState<EmailTemplate['category']>(
@@ -149,7 +148,6 @@ export function TemplateManager({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Template List Sidebar */}
         <div className="lg:col-span-4 space-y-3">
           <div className="text-xs font-bold uppercase tracking-widest text-slate-500 px-1">
             Saved Templates ({templates.length})
@@ -229,7 +227,6 @@ export function TemplateManager({
           </div>
         </div>
 
-        {/* Template Detail & Editor */}
         <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
             <div>
@@ -259,7 +256,6 @@ export function TemplateManager({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Title */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                 Template Name
@@ -273,7 +269,6 @@ export function TemplateManager({
               />
             </div>
 
-            {/* Category */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                 Category
@@ -291,7 +286,6 @@ export function TemplateManager({
             </div>
           </div>
 
-          {/* Subject */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-semibold text-slate-300">
@@ -308,14 +302,12 @@ export function TemplateManager({
             />
           </div>
 
-          {/* Body */}
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
               <label className="text-xs font-semibold text-slate-300">
                 Email Message Body
               </label>
               
-              {/* Dynamic tag insert buttons */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[10px] text-slate-400">Insert tag:</span>
                 {['role', 'company', 'name', 'sender_name', 'sender_email'].map((tag) => (
@@ -340,13 +332,11 @@ export function TemplateManager({
             />
           </div>
 
-          {/* Attachments for this template (CV / Portfolio) */}
           <div className="pt-2">
             <AttachmentUploader
               attachments={attachments}
               onUpdateAttachments={(newAtts) => {
                 setAttachments(newAtts);
-                // Also save to default attachments storage
                 storageService.saveDefaultAttachments(newAtts);
               }}
               isCVMode={true}

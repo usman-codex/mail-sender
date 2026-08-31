@@ -33,7 +33,6 @@ export function EmailComposer({
   onStartSequence,
   isSendingSequence,
 }: EmailComposerProps) {
-  // Load local storage initial state
   const savedData = storageService.getUserData(user.email);
 
   const [recipientInput, setRecipientInput] = useState('');
@@ -49,7 +48,6 @@ export function EmailComposer({
   const autoAddTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debounceSyncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // When user logs in, load cloud data from Supabase first if available, fallback to local storage
   useEffect(() => {
     let isMounted = true;
     if (user?.email) {
@@ -58,10 +56,8 @@ export function EmailComposer({
       setBody(local.body || '');
       setAttachments(local.attachments || []);
 
-      // Fetch from Supabase for cross-device persistence
       supabaseService.getUserData(user.email).then((cloudData) => {
         if (isMounted && cloudData) {
-          // If cloud data exists, update state and local cache
           if (cloudData.subject || cloudData.body || (cloudData.attachments && cloudData.attachments.length > 0)) {
             setSubject(cloudData.subject || '');
             setBody(cloudData.body || '');
@@ -82,10 +78,8 @@ export function EmailComposer({
     };
   }, [user?.email]);
 
-  // Persist changes to local storage immediately and Supabase with debounce
   const persistChanges = (newSubject: string, newBody: string, newAttachments: EmailAttachment[]) => {
     if (user?.email) {
-      // 1. Local storage instant save
       storageService.saveUserData(user.email, {
         subject: newSubject,
         body: newBody,
@@ -94,7 +88,6 @@ export function EmailComposer({
       setIsAutoSaved(true);
       setTimeout(() => setIsAutoSaved(false), 2000);
 
-      // 2. Debounced Cloud sync to Supabase
       if (debounceSyncTimeoutRef.current) {
         clearTimeout(debounceSyncTimeoutRef.current);
       }
@@ -132,7 +125,6 @@ export function EmailComposer({
     persistChanges(subject, body, newAttachments);
   };
 
-  // Add recipients from text input
   const addRecipientsFromInput = (text: string) => {
     if (!text.trim()) return;
 
@@ -154,7 +146,6 @@ export function EmailComposer({
     setRecipientInput('');
   };
 
-  // Real-time input handling with auto-add
   const handleInputChange = (value: string) => {
     setRecipientInput(value);
     setValidationError(null);
@@ -267,20 +258,16 @@ export function EmailComposer({
 
     setValidationError(null);
 
-    // Save state locally & cloud
     persistChanges(subject, body, attachments);
 
-    // Trigger sending sequence
     onStartSequence(finalRecipients, subject, body, attachments);
 
-    // Clear recipients queue after dispatch
     setRecipients([]);
     setRecipientInput('');
   };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
-      {/* Error Banner */}
       {validationError && (
         <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
@@ -289,7 +276,6 @@ export function EmailComposer({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Recipients */}
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-4 flex flex-col h-full">
             <div className="flex items-center justify-between">
@@ -309,7 +295,6 @@ export function EmailComposer({
               )}
             </div>
 
-            {/* Recipient Input */}
             <div className="space-y-2">
               <div className="relative">
                 <textarea
@@ -338,7 +323,6 @@ export function EmailComposer({
               </div>
             </div>
 
-            {/* Recipient Chips List */}
             {recipients.length > 0 ? (
               <div className="space-y-1.5 flex-1 max-h-72 overflow-y-auto pr-1">
                 {recipients.map((rcp, idx) => (
@@ -370,7 +354,6 @@ export function EmailComposer({
           </div>
         </div>
 
-        {/* Right Column: Subject, Message, CV Attachment */}
         <div className="lg:col-span-7 bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-4 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -391,7 +374,6 @@ export function EmailComposer({
               </div>
             </div>
 
-            {/* Subject Field */}
             <div className="space-y-1.5">
               <label className="text-xs text-slate-400 flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-indigo-400" />
@@ -406,7 +388,6 @@ export function EmailComposer({
               />
             </div>
 
-            {/* Message Body Field */}
             <div className="space-y-1.5">
               <label className="text-xs text-slate-400">
                 Message Body
@@ -420,7 +401,6 @@ export function EmailComposer({
               />
             </div>
 
-            {/* CV / Resume Attachment Field */}
             <AttachmentUploader
               attachments={attachments}
               onUpdateAttachments={handleAttachmentsChange}
@@ -428,7 +408,6 @@ export function EmailComposer({
             />
           </div>
 
-          {/* Bottom Send Button */}
           <div className="pt-3 border-t border-slate-800 flex justify-end">
             <button
               id="start-sequence-dispatch-btn"

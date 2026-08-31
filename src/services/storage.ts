@@ -111,7 +111,7 @@ export const storageService = {
   addHistoryLog(log: DeliveryLog) {
     try {
       const history = this.getHistory();
-      const updated = [log, ...history].slice(0, 1000); // keep last 1000 logs
+      const updated = [log, ...history].slice(0, 1000);
       localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(updated));
     } catch (e) {
       console.error('Failed to add history log', e);
@@ -154,7 +154,6 @@ export const storageService = {
         }
       }
     } catch {
-      // ignore
     }
     const fresh: GmailQuotaInfo = {
       dailySentCount: 0,

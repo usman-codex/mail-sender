@@ -63,7 +63,6 @@ export function DeliveryHistory({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* Header & Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -106,7 +105,6 @@ export function DeliveryHistory({
         </div>
       </div>
 
-      {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
           <div>
@@ -139,7 +137,6 @@ export function DeliveryHistory({
         </div>
       </div>
 
-      {/* Filters and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -196,7 +193,6 @@ export function DeliveryHistory({
         )}
       </div>
 
-      {/* Logs Table / List */}
       {filteredLogs.length === 0 ? (
         <div className="p-12 text-center rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
           <History className="w-8 h-8 mx-auto text-slate-600" />
