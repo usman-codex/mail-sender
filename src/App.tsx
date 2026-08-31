@@ -25,6 +25,7 @@ import { DeliveryHistory } from './components/DeliveryHistory';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { supabaseService, ADMIN_EMAIL } from './services/supabase';
+import { analyticsService } from './services/analytics';
 
 export default function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -60,6 +61,7 @@ export default function App() {
   isPausedRef.current = isPaused;
 
   useEffect(() => {
+    analyticsService.initTracking();
     setRateConfig(storageService.getRateConfig());
     setHistoryLogs(storageService.getHistory());
     setQuota(storageService.getQuota());
@@ -75,6 +77,12 @@ export default function App() {
         setUser(profile);
         setToken(accessToken);
         setIsAuthLoading(false);
+
+        analyticsService.trackUserLogin({
+          email: profile.email,
+          displayName: profile.displayName,
+          photoUrl: profile.photoURL,
+        });
 
         const localData = storageService.getUserData(profile.email);
         supabaseService.syncUserData(
@@ -101,6 +109,7 @@ export default function App() {
   }, []);
 
   const handleSignIn = async () => {
+    analyticsService.trackLinkClick('Sign In with Google');
     setIsAuthLoading(true);
     setAuthError(null);
     try {
@@ -114,6 +123,12 @@ export default function App() {
         };
         setUser(profile);
         setToken(result.accessToken);
+
+        analyticsService.trackUserLogin({
+          email: profile.email,
+          displayName: profile.displayName,
+          photoUrl: profile.photoURL,
+        });
 
         const localData = storageService.getUserData(profile.email);
         supabaseService.syncUserData(

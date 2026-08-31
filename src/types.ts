@@ -76,4 +76,42 @@ export interface UserSavedData {
   updated_at?: string;
   created_at?: string;
   total_sent_count?: number;
+  last_login?: string;
+}
+
+export interface ActivityEvent {
+  id: string;
+  type: 'visit' | 'click' | 'login' | 'template_saved' | 'cv_uploaded' | 'dispatch';
+  userEmail?: string;
+  title: string;
+  description?: string;
+  timestamp: string;
+}
+
+export interface TrafficSource {
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+export interface UserRanking {
+  rank: number;
+  email: string;
+  displayName: string;
+  photoUrl?: string;
+  emailsSent: number;
+  lastActive: string;
+  hasCv: boolean;
+  cvCount: number;
+}
+
+export interface AnalyticsSummary {
+  pageViews: number;
+  uniqueVisitors: number;
+  linkClicks: number;
+  totalRegistered: number;
+  totalEmailsDispatched: number;
+  trafficSources: TrafficSource[];
+  rankings: UserRanking[];
+  recentActivities: ActivityEvent[];
 }
