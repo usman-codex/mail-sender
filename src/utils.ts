@@ -163,6 +163,131 @@ export function validateEmailDetailed(rawEmail: string): EmailValidationResult {
     };
   }
 
+  // Check against disposable / fake / throwaway domains
+  const DISPOSABLE_DOMAINS = new Set([
+    'example.com',
+    'test.com',
+    'invalid.com',
+    'fake.com',
+    'mailinator.com',
+    'tempmail.com',
+    '10minutemail.com',
+    'throwaway.com',
+    'guerrillamail.com',
+    'sharklasers.com',
+    'yopmail.com',
+    'dispostable.com',
+    'getairmail.com',
+    'trashmail.com',
+  ]);
+
+  if (DISPOSABLE_DOMAINS.has(domainPart)) {
+    return {
+      isValid: false,
+      cleanEmail: clean,
+      error: `"${domainPart}" is a temporary/disposable domain and cannot be used for sending resumes.`,
+    };
+  }
+
+  // Gmail & Googlemail specific strict account rules
+  if (domainPart === 'gmail.com' || domainPart === 'googlemail.com') {
+    // 1. Google rule: Gmail usernames must be between 6 and 30 characters
+    const baseUser = localPart.split('+')[0].replace(/\./g, ''); // ignore dots & alias for length
+    if (baseUser.length < 6) {
+      return {
+        isValid: false,
+        cleanEmail: clean,
+        error: `Gmail usernames must be between 6 and 30 characters (found only ${baseUser.length}).`,
+      };
+    }
+    if (baseUser.length > 30) {
+      return {
+        isValid: false,
+        cleanEmail: clean,
+        error: `Gmail usernames cannot exceed 30 characters.`,
+      };
+    }
+    // 2. Google only allows alphanumeric and periods in username (no special chars like %, $, _, etc in standard Gmail addresses)
+    if (!/^[a-zA-Z0-9.+]+$/.test(localPart)) {
+      return {
+        isValid: false,
+        cleanEmail: clean,
+        error: `Gmail addresses only allow letters (a-z), numbers (0-9), and periods (.).`,
+      };
+    }
+  }
+
+  // Gibberish & Fake Random Keyboard-mash Checks
+  const pureLetters = localPart.replace(/[^a-zA-Z]/g, '');
+
+  // 1. Check for keyboard mash sequence patterns
+  const KEYBOARD_MASH_PATTERNS = [
+    /hjkhhk/i,
+    /asdfgh/i,
+    /sdfghj/i,
+    /dfghjk/i,
+    /zxcvbn/i,
+    /qwerty/i,
+    /wertyu/i,
+    /ertyui/i,
+    /qazwsx/i,
+    /123456/,
+    /987654/,
+  ];
+
+  for (const pattern of KEYBOARD_MASH_PATTERNS) {
+    if (pattern.test(localPart)) {
+      return {
+        isValid: false,
+        cleanEmail: clean,
+        error: `"${localPart}" appears to be a random keyboard smash/test address and does not exist.`,
+      };
+    }
+  }
+
+  // 2. Repetitive character smash (e.g. "aaaaa", "11111", "zzzzz", "xxxxxx")
+  if (/(.)\1{3,}/.test(localPart)) {
+    return {
+      isValid: false,
+      cleanEmail: clean,
+      error: `"${localPart}" contains excessive repeating characters (${localPart.slice(0, 5)}...) and is invalid.`,
+    };
+  }
+
+  // 3. Low character diversity in usernames >= 5 chars (e.g. only 2 unique chars like "hjkhh", "ababab", "xyxyx")
+  if (pureLetters.length >= 5) {
+    const uniqueChars = new Set(pureLetters.split(''));
+    if (uniqueChars.size <= 2) {
+      return {
+        isValid: false,
+        cleanEmail: clean,
+        error: `"${localPart}" is not a valid mailbox name (contains random repeated characters).`,
+      };
+    }
+  }
+
+  // 4. Vowel test: Natural human names & words almost always contain vowels ('a','e','i','o','u','y').
+  // If a username has 5 or more letters and ZERO vowels (e.g. "hjkhhk", "bcdfgh", "zxcvbn"), it's gibberish.
+  if (pureLetters.length >= 5) {
+    const hasVowel = /[aeiouy]/i.test(pureLetters);
+    if (!hasVowel) {
+      return {
+        isValid: false,
+        cleanEmail: clean,
+        error: `"${localPart}" is an invalid/gibberish username (contains no vowels like a, e, i, o, u). Real email accounts require readable names.`,
+      };
+    }
+  }
+
+  // 5. Unnatural consonant cluster check (e.g. 5 consecutive consonants like "hjkhhk", "rtsdfg")
+  if (/[bcdfghjklmnpqrstvwxz]{5,}/i.test(pureLetters)) {
+    return {
+      isValid: false,
+      cleanEmail: clean,
+      error: `"${localPart}" has an unnatural character pattern and does not exist as a registered mailbox.`,
+    };
+  }
+
   return {
     isValid: true,
     cleanEmail: clean,

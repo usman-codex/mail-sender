@@ -413,6 +413,9 @@ export function EmailComposer({
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-[10px] text-slate-500">{idx + 1}.</span>
                       <span className="text-slate-200 truncate">{rcp.email}</span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
+                        <Check className="w-2.5 h-2.5" /> Valid
+                      </span>
                     </div>
                     <button
                       type="button"
