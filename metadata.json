@@ -1,5 +1,5 @@
 {
-  "name": "Gmail Sequence & Resume Mailer",
+  "name": "Resume Mailer & Dispatcher",
   "description": "Send bulk and sequence emails with resume attachments, preconfigured templates, throttle controls, and delivery tracking directly from your verified Gmail account.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
