@@ -861,7 +861,7 @@ export function AdminDashboard({ currentUserEmail }: AdminDashboardProps) {
             <p className="text-xs text-slate-400 leading-relaxed">
               To allow live cloud sync of all users across different devices, copy this script and run it in your{' '}
               <a
-                href="https://supabase.com/dashboard/project/rfhmbudcthdsgzdeydzc/sql/new"
+                href="https://supabase.com/dashboard/project/ntxdqmomdyhlvldcmpno/sql/new"
                 target="_blank"
                 rel="noreferrer"
                 className="text-indigo-400 hover:underline font-medium inline-flex items-center gap-1"

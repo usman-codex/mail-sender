@@ -4,12 +4,12 @@ import { analyticsService } from './analytics';
 
 export const ADMIN_EMAIL = 'usmancodex.dev@gmail.com';
 
-const SUPABASE_URL = 'https://rfhmbudcthdsgzdeydzc.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmaG1idWRjdGhkc2d6ZGV5ZHpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MTgzNDksImV4cCI6MjEwMjk5NDM0OX0.n0yD9eFKodCOJp_l9POVHDi0smWdewOtSzr3Idy-jMc';
+const SUPABASE_URL = 'https://ntxdqmomdyhlvldcmpno.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50eGRxbW9tZHlobHZsZGNtcG5vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxOTE1NDIsImV4cCI6MjEwMzc2NzU0Mn0.0KoWibCavoCgd-NgogJDbkhS0Y4f1SMnB0MgBxLRFxo';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-export const SUPABASE_RLS_FIX_SQL = `-- Run this in Supabase SQL Editor (https://supabase.com/dashboard/project/rfhmbudcthdsgzdeydzc/sql/new)
+export const SUPABASE_RLS_FIX_SQL = `-- Run this in Supabase SQL Editor (https://supabase.com/dashboard/project/ntxdqmomdyhlvldcmpno/sql/new)
 -- This grants public access so all registered users, templates, CVs, and analytics sync smoothly
 
 CREATE TABLE IF NOT EXISTS public.user_templates (
