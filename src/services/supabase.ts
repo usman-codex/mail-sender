@@ -43,10 +43,37 @@ CREATE TABLE IF NOT EXISTS public.site_analytics (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Disable Row-Level Security so the frontend client can read & write
-ALTER TABLE public.user_templates DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.email_logs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.site_analytics DISABLE ROW LEVEL SECURITY;
+-- 1. Enable Row-Level Security (RLS) to remove Supabase Critical Security warnings
+ALTER TABLE public.user_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.email_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_analytics ENABLE ROW LEVEL SECURITY;
+
+-- 2. Drop any previous conflicting policies
+DROP POLICY IF EXISTS "Allow public all access user_templates" ON public.user_templates;
+DROP POLICY IF EXISTS "Allow public all access email_logs" ON public.email_logs;
+DROP POLICY IF EXISTS "Allow public all access site_analytics" ON public.site_analytics;
+
+-- 3. Add explicit permissive policies for public, anon & authenticated roles
+CREATE POLICY "Allow public all access user_templates"
+ON public.user_templates
+FOR ALL
+TO public, anon, authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow public all access email_logs"
+ON public.email_logs
+FOR ALL
+TO public, anon, authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow public all access site_analytics"
+ON public.site_analytics
+FOR ALL
+TO public, anon, authenticated
+USING (true)
+WITH CHECK (true);
 `;
 
 export interface SupabaseHealth {
