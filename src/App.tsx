@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   initAuth,
   googleSignIn,
   logout,
   getAccessToken,
   setCachedAccessToken,
+  isAuthOrSessionExpiredError,
 } from './services/auth';
 import { sendGmailMessage } from './services/gmail';
 import { storageService, DEFAULT_RATE_CONFIG } from './services/storage';
@@ -60,6 +61,24 @@ export default function App() {
   const isPausedRef = useRef(false);
   isPausedRef.current = isPaused;
 
+  const handleSessionExpired = useCallback(async (customMessage?: string) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsSendingSequence(false);
+    setIsPaused(false);
+    isPausedRef.current = false;
+    setQueueRecipients([]);
+    await logout();
+    setUser(null);
+    setToken(null);
+    setActiveTab('composer');
+    setAuthError(
+      customMessage || 'Your Google session has expired for security. Please sign in with Google again to continue.'
+    );
+  }, []);
+
   useEffect(() => {
     analyticsService.initTracking();
     setRateConfig(storageService.getRateConfig());
@@ -94,10 +113,13 @@ export default function App() {
           localData.attachments || []
         );
       },
-      () => {
+      (reason) => {
         setUser(null);
         setToken(null);
         setIsAuthLoading(false);
+        if (reason) {
+          setAuthError(reason);
+        }
       }
     );
 
@@ -184,7 +206,7 @@ export default function App() {
     if (!currentAccessToken) {
       currentAccessToken = await getAccessToken();
       if (!currentAccessToken) {
-        alert('Authentication expired. Please sign in again with Google to send emails.');
+        await handleSessionExpired('Your Google session has expired. Please sign in with Google to send emails.');
         return;
       }
       setToken(currentAccessToken);
@@ -363,6 +385,14 @@ export default function App() {
         const updatedQuota = storageService.incrementQuota(1);
         setQuota(updatedQuota);
       } else {
+        if (isAuthOrSessionExpiredError(errorMessage)) {
+          console.warn('Session expired during dispatch. Automatically logging out to login page.');
+          await handleSessionExpired(
+            'Your Google session has expired for security. Please sign in with Google again to continue sending.'
+          );
+          return;
+        }
+
         consecutiveErrors++;
         setQueueRecipients((prev) =>
           prev.map((r, idx) =>

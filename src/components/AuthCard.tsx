@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Zap, FileText, Lock, AlertCircle, Copy, Check, ExternalLink } from 'lucide-react';
+import { Mail, Zap, FileText, Lock, AlertCircle, Copy, Check, ExternalLink, Clock } from 'lucide-react';
 
 interface AuthCardProps {
   onSignIn: () => void;
@@ -21,6 +21,10 @@ export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
   };
 
   const isUnauthorizedDomain = error?.toLowerCase().includes('unauthorized-domain');
+  const isSessionExpired =
+    error?.toLowerCase().includes('expired') ||
+    error?.toLowerCase().includes('session') ||
+    error?.toLowerCase().includes('unauthorized');
 
   return (
     <div className="max-w-2xl mx-auto my-12 px-4">
@@ -74,15 +78,35 @@ export function AuthCard({ onSignIn, isLoading, error }: AuthCardProps) {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs text-left space-y-3">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <div
+              className={`mb-6 p-4 rounded-xl text-xs text-left space-y-3 ${
+                isSessionExpired
+                  ? 'bg-amber-500/10 border border-amber-500/30 text-amber-300'
+                  : 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
+              }`}
+            >
+              <div className="flex items-start gap-2.5">
+                {isSessionExpired ? (
+                  <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                )}
                 <div>
-                  <p className="font-semibold text-rose-300">
-                    {isUnauthorizedDomain ? 'Firebase Domain Authorization Required' : 'Authorization Notice'}
+                  <p
+                    className={`font-semibold ${
+                      isSessionExpired ? 'text-amber-200' : 'text-rose-300'
+                    }`}
+                  >
+                    {isSessionExpired
+                      ? 'Session Expired — Please Sign In Again'
+                      : isUnauthorizedDomain
+                      ? 'Firebase Domain Authorization Required'
+                      : 'Authorization Notice'}
                   </p>
-                  <p className="text-rose-300/90 mt-0.5">
-                    {isUnauthorizedDomain
+                  <p className={`${isSessionExpired ? 'text-amber-300/90' : 'text-rose-300/90'} mt-0.5 leading-relaxed`}>
+                    {isSessionExpired
+                      ? error || 'Your Google OAuth session has expired. Click "Sign in with Google" above to reconnect with fresh permissions and resume sending.'
+                      : isUnauthorizedDomain
                       ? 'This preview URL is not yet listed in Firebase Console Authorized Domains.'
                       : error}
                   </p>
